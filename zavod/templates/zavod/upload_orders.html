@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ООО "Металл Дизайн" - Создать</title>
+    <link rel="stylesheet" href="{% static 'zavod/upload_orders.css' %}">
+</head>
+<body>
+     
+    <h2>ООО "Металл Дизайн" - Заказы - Создать Заказ</h2>
+    <div class="menu">
+        <a href="{% url 'reports' %}">Отчеты</a>
+        <a href="{% url 'orders' %}">Заказы</a>
+        <a href="{% url 'employee_list' %}">Главная</a>
+    </div>
+    </div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form }}
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html>

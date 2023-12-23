@@ -1,0 +1,123 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #8e8e8e;
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    margin-left: 1.5%;
+    margin-right: 1.5%;
+}
+.menu {
+    background-color: #333;
+    padding: 10px;
+    text-align: center;
+}
+
+.menu a {
+    color: #fff;
+    text-decoration: none;
+    padding: 10px;
+    margin: 0 5px;
+}
+
+.menu a:hover {
+    background-color: #555;
+}
+
+h2 {
+    color: #000000;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+select {
+    width: calc(100% - 16px);
+    padding: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.heads {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+.heads-column {
+    margin: 0;
+}
+
+img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.add-form-btn,
+.save-btn,
+.table-btn {
+    background-color: #4caf50;
+    color: #fff;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: #4caf50;
+    color: #fff;
+    padding: 15px;
+    border-radius: 4px;
+    z-index: 1000;
+}
+
+.clear {
+    clear: both;
+}
+
+.container-flex {
+    display: flex;
+    justify-content: space-between;
+}
+
+#task-container{
+    width: 78%; /* Adjusted width for better spacing, you can adjust as needed */
+    margin-bottom: 20px;
+}
+
+#task-count-container{
+    width: 20%;
+}
+
+#task-container label,
+#task-count-container label,
+#task-container select,
+#task-count-container select {
+    display: block;
+    margin-bottom: 8px;
+}
+
+#task-container select {
+    width: calc(100% - 16px);
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-top: 5px;
+}

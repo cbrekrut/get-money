@@ -1,0 +1,160 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ООО "Металл Дизайн"</title>
+    <link rel="stylesheet" href="{% static 'zavod/style.css' %}">
+<style>
+</style>
+</head>
+<body>
+    <div class = "heads">
+    <div class = "heads-column">
+    <img src="{% static 'zavod/MD.png'%}" />
+    </div>
+    <div class = "heads-column">
+    <h2>Металл Дизайн</h2>
+    </div>
+    <div class="menu">
+        <a href="{% url 'reports' %}">Отчеты</a>
+        <a href="{% url 'orders' %}">Заказы</a>
+        <a href="{% url 'employee_list' %}">Главная</a>
+    </div>
+    </div>
+    <form id="main-form">
+        <label for="fio">Выберите ФИО:</label>
+        <select id="fio" name="fio">
+            <option value="test">- - - - -</option>
+            {% for employee in employees %}
+            <option value="{{ employee.full_name }}">{{ employee.full_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="position">Выберите Должность:</label>
+        <select id="position" name="position">
+            <option value="test">- - - - -</option>
+            {% for position in positions %}
+            <option value="{{ position.title }}">{{ position.title }}</option>
+            {% endfor %}
+        </select>
+        <div class = "container-flex">
+        <div id="task-container">
+            <label for="task">Выберите задачу:</label>
+            <select id="task" name="task">
+                <option value="test">- - - - -</option>
+                {% for task in tasks %}
+                <option value="{{ task.description }}">{{ task.description }}</option>
+                {% endfor %}
+            </select>
+            </div>
+        <div id="task-count-container">
+            <label for="task-count">Кол-во:</label>
+            <select id ="task-count" name="task-count">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            </select>
+            </div>
+        </div>
+        <div class = "clear">
+        </div>
+        <button type="button" class="add-form-btn" onclick="addNewSelect()">Добавить задачу</button>
+        <button type="button" class="save-btn" onclick="saveData()">Сохранить</button>
+       <button type="button" class="table-btn" onclick="generateExcel()">Создать отчет</button>
+
+            <script>
+                function generateExcel() {
+                    // Redirect to the Django view that generates the Excel file
+                    window.location.href = '/generate-excel/';
+                }
+            </script>
+
+        <!-- Hidden input field to store selected tasks -->
+        <input type="hidden" id="selected-tasks" name="selected-tasks" value="">
+
+        <!-- Popup notification -->
+        <div id="notification" class="popup">Данные успешно сохранены!</div>
+    </form>
+
+    <script>
+        function addNewSelect() {
+            var taskSelectClone = document.getElementById('task').cloneNode(true);
+            var taskcSelectClone = document.getElementById('task-count').cloneNode(true);
+            document.getElementById('task-container').appendChild(taskSelectClone);
+            document.getElementById('task-count-container').appendChild(taskcSelectClone);
+        }
+
+        function saveData() {
+            // Get selected ФИО, должность, and task values
+            var selectedData = {
+                fio: document.getElementById('fio').value,
+                position: document.getElementById('position').value,
+                tasks: [],
+                tasks_count:[],
+            };
+
+            var taskSelects = document.querySelectorAll('#task-container select');
+            taskSelects.forEach(function(select) {
+                selectedData.tasks.push(select.value);
+            });
+            var taskcSelects = document.querySelectorAll('#task-count-container select');
+            taskcSelects.forEach(function(select) {
+                selectedData.tasks_count.push(select.value);
+            });
+
+            // Get the CSRF token from the cookie
+            var csrftoken = getCookie('csrftoken');
+
+            // Perform AJAX request to save data to the Django database (requires Django view)
+            fetch('/save-data/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,  // Include the CSRF token in the headers
+                },
+                body: JSON.stringify(selectedData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Data saved successfully:', data);
+                showNotification();  // Show the notification on success
+            })
+            .catch(error => {
+                console.error('Error saving data:', error);
+            });
+        }
+
+        // Function to show the notification
+        function showNotification() {
+            var notification = document.getElementById('notification');
+            notification.style.display = 'block';
+
+            // Hide the notification after 3 seconds
+            setTimeout(function() {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Function to get CSRF token from cookies
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    // Check if the cookie name matches the pattern 'csrftoken='
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+    </script>
+</body>
+</html>

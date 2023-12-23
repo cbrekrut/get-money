@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ООО "Металл Дизайн" - Отчеты</title>
+    <link rel="stylesheet" href="{% static 'zavod/style.css' %}">
+
+</head>
+<body>
+      <div class = "heads">
+    <div class = "heads-column">
+    </div>
+    <div class = "heads-column">
+    <h2>ООО "Металл Дизайн" - Отчеты</h2>
+    </div>
+    <div class="menu">
+        <a href="{% url 'reports' %}">Отчеты</a>
+        <a href="{% url 'orders' %}">Заказы</a>
+        <a href="{% url 'employee_list' %}">Главная</a>
+    </div>
+    </div>
+        <button type="button" class="table-btn" onclick="generateExcel()">Создать отчет</button>
+        <script>
+                function generateExcel() {
+                    window.location.href = '/generate-excel/';
+                }
+        </script>
+</body>
+</html>
