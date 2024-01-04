@@ -5,13 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ООО "Металл Дизайн" - Отчеты</title>
-    <link rel="stylesheet" href="{% static 'zavod/style.css' %}">
+    <link rel="stylesheet" href="{% static 'zavod/reports.css' %}">
 
 </head>
 <body>
       <div class = "heads">
-    <div class = "heads-column">
-    </div>
     <div class = "heads-column">
     <h2>ООО "Металл Дизайн" - Отчеты</h2>
     </div>
@@ -21,7 +19,33 @@
         <a href="{% url 'employee_list' %}">Главная</a>
     </div>
     </div>
-        <button type="button" class="table-btn" onclick="generateExcel()">Создать отчет</button>
+        <form method="post" action="{% url 'generate_excel' %}">
+        {% csrf_token %}
+        <label for="start_date">Начальная дата:</label>
+        <input type="date" id="start_date" name="start_date" required>
+
+        <label for="end_date">Конечная дата:</label>
+        <input type="date" id="end_date" name="end_date" required>
+
+        <button type="submit" class="table-btn">Создать отчет</button>
+    </form>
+
+    <form method="post" action="{% url 'workshop_report' %}">
+    {% csrf_token %}
+        <label for="start_date">Начальная дата:</label>
+        <input type="date" id="start_date" name="start_date" required>
+
+        <label for="end_date">Конечная дата:</label>
+        <input type="date" id="end_date" name="end_date" required>
+
+        <label for="workshop">Цех:</label>
+        <select id="workshop" name="workshop" required>
+        <option value="Цех2">Цех2</option>
+        <option value="Цех1">Цех1</option>
+    </select>
+
+    <button type="submit" class="table-btn">Создать отчет</button>
+</form>
         <script>
                 function generateExcel() {
                     window.location.href = '/generate-excel/';

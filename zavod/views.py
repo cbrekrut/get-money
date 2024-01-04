@@ -7,6 +7,7 @@ import json
 from .models import Employee, Position, Task, Data
 from .forms import UploadFileForm
 import pandas as pd
+from datetime import datetime
 
 def employee_list(request):
     employees = Employee.objects.all()
@@ -16,15 +17,27 @@ def employee_list(request):
 
 
 def generate_excel(request):
-    # Get data from the database
-    data_objects = Data.objects.all()
+    # Check if the form is submitted
+    if request.method == 'POST':
+        start_date_str = request.POST.get('start_date')
+        end_date_str = request.POST.get('end_date')
+
+        # Convert string dates to datetime objects
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+        # Filter data based on the date range
+        data_objects = Data.objects.filter(date__range=(start_date, end_date))
+    else:
+        # If the form is not submitted, get all data
+        data_objects = Data.objects.all()
 
     # Create a new workbook and add a worksheet
     workbook = Workbook()
     worksheet = workbook.active
 
     # Write column headers
-    headers = ['Full Name', 'Position', 'Task', 'Date']
+    headers = ['Full Name', 'Position', 'Task', 'Date', 'Cost', 'Count', 'Money']
     for col_num, header in enumerate(headers, 1):
         worksheet.cell(row=1, column=col_num, value=header)
 
@@ -34,6 +47,9 @@ def generate_excel(request):
         worksheet.cell(row=row_num, column=2, value=data_object.position)
         worksheet.cell(row=row_num, column=3, value=data_object.task)
         worksheet.cell(row=row_num, column=4, value=data_object.date.strftime('%Y-%m-%d'))
+        worksheet.cell(row=row_num, column=5, value=data_object.cost)
+        worksheet.cell(row=row_num, column=6, value=data_object.count)
+        worksheet.cell(row=row_num, column=7, value=(int(data_object.count) * int(data_object.cost)))
 
     # Create the response with the appropriate content type
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -50,21 +66,33 @@ def save_data(request):
     fio = data.get('fio')
     position = data.get('position')
     tasks = data.get('tasks', [])
-    tasks_count = data.get('tasks_count',[])
-    index = 0
-    for task_description in tasks:
-        for i in range(int(tasks_count[index])):
-            task_instance = Data(full_name = fio,position = position,task = task_description)
-            task_instance.save()
-        index+=1
+    tasks_count = data.get('tasks_count', [])
 
-    return JsonResponse({'message': 'Data saved successfully'})
+    for i, task_description in enumerate(tasks):
+        task_count = int(tasks_count[i])
+
+        # Находим соответствующий объект Task по описанию
+        task_instance = Task.objects.get(name=task_description)
+
+        # Проверяем, чтобы count не стал отрицательным
+        if task_instance.count_detail >= task_count:
+            task_instance.count_detail -= task_count
+            task_instance.save()
+            data_instance = Data(full_name=fio, position=position, task=task_description, count=task_count,cost = task_instance.cost)
+            data_instance.save()
+            return JsonResponse({'message': 'Data saved successfully'})
+      
+        
+
+    return JsonResponse({'message': 'Data Failed'})
 
 def reports(request):
     return render(request,'zavod/reports.html')
 
 def orders(request):
-    return render(request,'zavod/orders.html')
+    active_orders = Task.objects.filter(count_detail__gt=0)
+    context = {'active_orders': active_orders}
+    return render(request, 'zavod/orders.html', context)
 
 
 
@@ -75,14 +103,51 @@ def upload_orders(request):
             # Process the uploaded file
             file = request.FILES['file']
             df = pd.read_excel(file)    
-            
+            # Цех участок, Наименование операции,Прототип,к-во операций/часов,
+            #Кол - во операций/деталей, Код проекта,цена изготовления
+            #стоимость изтоготовления деталей, Общее время на узел, Трудоемкость
             for index, row in df.iterrows():
                 description = row['Task']
                 cost = row['Cost']
-                Task.objects.create(description=description, cost=cost)
+                count = int(row['Count'])
+                sales = int(row['Sales'])
+                Task.objects.create(name=description, cost=cost,count = count,sels=sales)
 
             return redirect('orders')  # Redirect to the orders page after processing the file
     else:
         form = UploadFileForm()
 
     return render(request, 'zavod/upload_orders.html', {'form': form})
+
+def workshop_report(request):
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        workshop = request.POST.get('workshop')
+
+        # Fetch tasks based on the provided filters
+        filtered_tasks = Data.objects.filter(
+            date__range=[start_date, end_date],
+            position=workshop
+        )
+
+        # Create an Excel workbook and add a worksheet
+        wb = Workbook()
+        ws = wb.active
+
+        # Write headers to the worksheet
+        headers = ['Workshop', 'Full Name', 'Order Number']
+        ws.append(headers)
+
+        # Write data to the worksheet
+        for task in filtered_tasks:
+            row_data = [task.workshop, task.full_name, task.id]
+            ws.append(row_data)
+
+        # Save the workbook to a response
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename=workshop_report_{start_date}_{end_date}.xlsx'
+        wb.save(response)
+
+    return response
+

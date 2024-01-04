@@ -11,8 +11,6 @@
 <body>
       <div class = "heads">
     <div class = "heads-column">
-    </div>
-    <div class = "heads-column">
     <h2>ООО "Металл Дизайн" - Заказы</h2>
     </div>
     <div class="menu">
@@ -22,6 +20,18 @@
     </div>
     </div>
     <button type="button" class="upload-btn" onclick ="UploadOrders()">Загрузить заказ</button>
+
+    {% if active_orders %}
+        <div class="active-orders">
+        <ul>
+            {% for order in active_orders %}
+                <li>{{ order.description }} - {{ order.count }}</li>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Нет активных заказов.</p>
+    {% endif %}
+
     <script>
                 function UploadOrders() {
                     window.location.href = '/upload_orders/';

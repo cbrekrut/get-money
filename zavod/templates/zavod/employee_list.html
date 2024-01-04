@@ -12,10 +12,7 @@
 <body>
     <div class = "heads">
     <div class = "heads-column">
-    <img src="{% static 'zavod/MD.png'%}" />
-    </div>
-    <div class = "heads-column">
-    <h2>Металл Дизайн</h2>
+    <h2>ООО "Металл Дизайн"</h2>
     </div>
     <div class="menu">
         <a href="{% url 'reports' %}">Отчеты</a>
@@ -32,7 +29,7 @@
             {% endfor %}
         </select>
 
-        <label for="position">Выберите Должность:</label>
+        <label for="position">Выберите Цех:</label>
         <select id="position" name="position">
             <option value="test">- - - - -</option>
             {% for position in positions %}
@@ -45,7 +42,7 @@
             <select id="task" name="task">
                 <option value="test">- - - - -</option>
                 {% for task in tasks %}
-                <option value="{{ task.description }}">{{ task.description }}</option>
+                <option value="{{ task.name }}">{{ task.name }}</option>
                 {% endfor %}
             </select>
             </div>
@@ -63,14 +60,6 @@
         </div>
         <button type="button" class="add-form-btn" onclick="addNewSelect()">Добавить задачу</button>
         <button type="button" class="save-btn" onclick="saveData()">Сохранить</button>
-       <button type="button" class="table-btn" onclick="generateExcel()">Создать отчет</button>
-
-            <script>
-                function generateExcel() {
-                    // Redirect to the Django view that generates the Excel file
-                    window.location.href = '/generate-excel/';
-                }
-            </script>
 
         <!-- Hidden input field to store selected tasks -->
         <input type="hidden" id="selected-tasks" name="selected-tasks" value="">

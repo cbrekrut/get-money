@@ -1,0 +1,63 @@
+/* zavod/style.css */
+body {
+    background-color: #e0e0e0; /* Light gray background color */
+    font-family: Arial, sans-serif;
+}
+
+.heads {
+    background-color: #333; /* Dark gray header background color */
+    color: #fff; /* White text color */
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.heads h2 {
+    margin: 0;
+}
+
+.menu a {
+    color: #fff;
+    text-decoration: none;
+    margin-right: 15px;
+}
+
+.menu a:hover {
+    text-decoration: underline;
+}
+
+form {
+    background-color: #f0f0f0; /* Light gray form background color */
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+}
+
+button.table-btn {
+    background-color: #4caf50; /* Green button background color */
+    color: #fff; /* White text color */
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button.table-btn:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+/* Add any additional styles as needed */
