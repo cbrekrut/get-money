@@ -9,8 +9,5 @@ class Task(models.Model):
     sels = models.IntegerField()
     position = models.CharField(Position,max_length=50)
 
-
-   
-
     def __str__(self):
         return self.name

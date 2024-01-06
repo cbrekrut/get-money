@@ -15,6 +15,11 @@ def employee_list(request):
     tasks = Task.objects.all()
     return render(request, 'zavod/employee_list.html', {'employees': employees, 'positions': positions, 'tasks': tasks})
 
+def get_tasks(request):
+    selected_position = request.GET.get('position')
+    tasks = Task.objects.filter(position__title=selected_position).values('name')
+    return JsonResponse(list(tasks), safe=False)
+
 
 def generate_excel(request):
     # Check if the form is submitted
@@ -100,20 +105,31 @@ def upload_orders(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            # Process the uploaded file
+            # Обрабатываем загруженный файл
             file = request.FILES['file']
-            df = pd.read_excel(file)    
-            # Цех участок, Наименование операции,Прототип,к-во операций/часов,
-            #Кол - во операций/деталей, Код проекта,цена изготовления
-            #стоимость изтоготовления деталей, Общее время на узел, Трудоемкость
-            for index, row in df.iterrows():
-                description = row['Task']
-                cost = row['Cost']
-                count = int(row['Count'])
-                sales = int(row['Sales'])
-                Task.objects.create(name=description, cost=cost,count = count,sels=sales)
+            df = pd.read_excel(file)
 
-            return redirect('orders')  # Redirect to the orders page after processing the file
+            for index, row in df.iterrows():
+                code = row['Task Code']  # Предполагаем, что 'Task Code' - это столбец для кода в вашем Excel-файле
+                name = row['Task']
+                count_times = float(row['Count Times'])
+                count_detail = int(row['Count Detail'])
+                cost = row['Cost']
+                sels = int(row['Sales'])
+                position = row['Position']  # Предполагаем, что 'Position' - это столбец для должности в вашем Excel-файле
+
+                Task.objects.create(
+                    code=code,
+                    name=name,
+                    count_times=count_times,
+                    count_detail=count_detail,
+                    cost=cost,
+                    sels=sels,
+                    position=position
+                )
+
+            return redirect('orders')  # Перенаправляем на страницу заказов после обработки файла
+
     else:
         form = UploadFileForm()
 

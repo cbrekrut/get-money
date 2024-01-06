@@ -30,7 +30,7 @@
         </select>
 
         <label for="position">Выберите Цех:</label>
-        <select id="position" name="position">
+        <select id="position" name="position" onchange="loadTasks()">
             <option value="test">- - - - -</option>
             {% for position in positions %}
             <option value="{{ position.title }}">{{ position.title }}</option>
@@ -41,9 +41,7 @@
             <label for="task">Выберите задачу:</label>
             <select id="task" name="task">
                 <option value="test">- - - - -</option>
-                {% for task in tasks %}
-                <option value="{{ task.name }}">{{ task.name }}</option>
-                {% endfor %}
+                <!--Задачи загрузятся динамически-->
             </select>
             </div>
         <div id="task-count-container">
@@ -67,6 +65,30 @@
         <!-- Popup notification -->
         <div id="notification" class="popup">Данные успешно сохранены!</div>
     </form>
+    
+<script>
+    function loadTasks() {
+        var selectedPosition = document.getElementById('position').value;
+
+        // Загрузите задачи на основе выбранной должности
+        fetch('/get-tasks/?position=' + selectedPosition)
+        .then(response => response.json())
+        .then(data => {
+            // Обновите элемент выбора задачи полученными задачами
+            var taskSelect = document.getElementById('task');
+            taskSelect.innerHTML = '<option value="test">- - - - -</option>'; // Очистите существующие варианты
+            data.forEach(function(task) {
+                var option = document.createElement('option');
+                option.value = task.name;
+                option.text = task.name;
+                taskSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке задач:', error);
+        });
+    }
+</script>
 
     <script>
         function addNewSelect() {
