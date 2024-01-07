@@ -1,4 +1,4 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from django.http import HttpResponse
 from django.http import JsonResponse
 from openpyxl import Workbook
@@ -116,8 +116,9 @@ def upload_orders(request):
                 count_detail = int(row['Count Detail'])
                 cost = row['Cost']
                 sels = int(row['Sales'])
-                position = row['Position']  # Предполагаем, что 'Position' - это столбец для должности в вашем Excel-файле
+                position_title = row['Position']  # Предполагаем, что 'Position' - это столбец для должности в вашем Excel-файле
 
+                position = get_object_or_404(Position, title=position_title)
                 Task.objects.create(
                     code=code,
                     name=name,
@@ -157,7 +158,7 @@ def workshop_report(request):
 
         # Write data to the worksheet
         for task in filtered_tasks:
-            row_data = [task.workshop, task.full_name, task.id]
+            row_data = [task.position, task.full_name, task.count]
             ws.append(row_data)
 
         # Save the workbook to a response

@@ -21,6 +21,7 @@
     </div>
         <form method="post" action="{% url 'generate_excel' %}">
         {% csrf_token %}
+        <h2>Финаносвый отчет</h2>
         <label for="start_date">Начальная дата:</label>
         <input type="date" id="start_date" name="start_date" required>
 
@@ -32,6 +33,7 @@
 
     <form method="post" action="{% url 'workshop_report' %}">
     {% csrf_token %}
+        <h2>Постовой отчет</h2>
         <label for="start_date">Начальная дата:</label>
         <input type="date" id="start_date" name="start_date" required>
 
@@ -40,8 +42,8 @@
 
         <label for="workshop">Цех:</label>
         <select id="workshop" name="workshop" required>
-        <option value="Цех2">Цех2</option>
-        <option value="Цех1">Цех1</option>
+        <option value="Сварочный">Сварочный</option>
+        <option value="Малярный">Малярный</option>
     </select>
 
     <button type="submit" class="table-btn">Создать отчет</button>

@@ -25,9 +25,10 @@
         <div class="active-orders">
         <ul>
             {% for order in active_orders %}
-                <li>{{ order.description }} - {{ order.count }}</li>
+                <li>{{ order.name }} - {{ order.count_detail }} шт. - {{ order.count_times}} ч.</li>
             {% endfor %}
         </div>
+    </ul>
     {% else %}
         <p>Нет активных заказов.</p>
     {% endif %}
