@@ -14,9 +14,10 @@
     <h2>ООО "Металл Дизайн" - Отчеты</h2>
     </div>
     <div class="menu">
+        <a href="{% url 'employee_list' %}">Главная</a>
         <a href="{% url 'reports' %}">Отчеты</a>
         <a href="{% url 'orders' %}">Заказы</a>
-        <a href="{% url 'employee_list' %}">Главная</a>
+        
     </div>
     </div>
         <form method="post" action="{% url 'generate_excel' %}">
@@ -48,6 +49,25 @@
 
     <button type="submit" class="table-btn">Создать отчет</button>
 </form>
+<form method="post" action="{% url 'employee_report' %}">
+        {% csrf_token %}
+        <h2>Отчет по сотруднику</h2>
+        <label for="employee">Выберите сотрудника:</label>
+        <select id="employee" name="employee" required>
+            <!-- Populate this select with the list of employees from your database -->
+            {% for employee in employees %}
+                <option value="{{ employee.full_name }}">{{ employee.full_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="start_date_employee">Начальная дата:</label>
+        <input type="date" id="start_date_employee" name="start_date_employee" required>
+
+        <label for="end_date_employee">Конечная дата:</label>
+        <input type="date" id="end_date_employee" name="end_date_employee" required>
+
+        <button type="submit" class="table-btn">Создать отчет</button>
+    </form>
         <script>
                 function generateExcel() {
                     window.location.href = '/generate-excel/';

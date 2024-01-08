@@ -8,6 +8,8 @@ from .models import Employee, Position, Task, Data
 from .forms import UploadFileForm
 import pandas as pd
 from datetime import datetime
+from django.contrib.auth.decorators import login_required
+
 
 def employee_list(request):
     employees = Employee.objects.all()
@@ -32,7 +34,7 @@ def generate_excel(request):
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
         # Filter data based on the date range
-        data_objects = Data.objects.filter(date__range=(start_date, end_date))
+        data_objects = Data.objects.filter(date__range=(start_date, end_date),status='approved')
     else:
         # If the form is not submitted, get all data
         data_objects = Data.objects.all()
@@ -91,32 +93,34 @@ def save_data(request):
 
     return JsonResponse({'message': 'Data Failed'})
 
+@login_required
 def reports(request):
-    return render(request,'zavod/reports.html')
+    employees = Employee.objects.all()
+    return render(request,'zavod/reports.html',{'employees': employees})
 
+@login_required
 def orders(request):
     active_orders = Task.objects.filter(count_detail__gt=0)
     context = {'active_orders': active_orders}
     return render(request, 'zavod/orders.html', context)
 
 
-
+@login_required
 def upload_orders(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            # Обрабатываем загруженный файл
             file = request.FILES['file']
             df = pd.read_excel(file)
 
             for index, row in df.iterrows():
-                code = row['Task Code']  # Предполагаем, что 'Task Code' - это столбец для кода в вашем Excel-файле
+                code = row['Task Code'] 
                 name = row['Task']
                 count_times = float(row['Count Times'])
                 count_detail = int(row['Count Detail'])
                 cost = row['Cost']
                 sels = int(row['Sales'])
-                position_title = row['Position']  # Предполагаем, что 'Position' - это столбец для должности в вашем Excel-файле
+                position_title = row['Position']  
 
                 position = get_object_or_404(Position, title=position_title)
                 Task.objects.create(
@@ -148,23 +152,51 @@ def workshop_report(request):
             position=workshop
         )
 
-        # Create an Excel workbook and add a worksheet
         wb = Workbook()
         ws = wb.active
 
-        # Write headers to the worksheet
         headers = ['Workshop', 'Full Name', 'Order Number']
         ws.append(headers)
 
-        # Write data to the worksheet
         for task in filtered_tasks:
             row_data = [task.position, task.full_name, task.count]
             ws.append(row_data)
 
-        # Save the workbook to a response
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename=workshop_report_{start_date}_{end_date}.xlsx'
         wb.save(response)
 
     return response
 
+def generate_employee_report_excel(employee, employee_data):
+    wb = Workbook()
+    ws = wb.active
+
+    ws.append(['Name','Date', 'Task', 'Count', 'Cost'])
+    for data in employee_data:
+        ws.append([data.full_name, data.date, data.task, data.count, data.cost])
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="employee_report.xlsx'
+
+    wb.save(response)
+
+    return response
+
+def employee_report(request):
+    if request.method == 'POST':
+        employee = request.POST.get('employee')
+        start_date_employee = request.POST.get('start_date_employee')
+        end_date_employee = request.POST.get('end_date_employee')
+
+        start_date_employee = datetime.strptime(start_date_employee, '%Y-%m-%d').date()
+        end_date_employee = datetime.strptime(end_date_employee, '%Y-%m-%d').date()
+        
+        employee_data = Data.objects.filter(full_name=employee, date__range=(start_date_employee, end_date_employee))
+
+        if not employee_data.exists():
+            return HttpResponse("No data available for the selected employee and date range.")
+
+        return generate_employee_report_excel(employee, employee_data)
+
+    return HttpResponse("Invalid request method.")

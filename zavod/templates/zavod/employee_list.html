@@ -15,9 +15,10 @@
     <h2>ООО "Металл Дизайн"</h2>
     </div>
     <div class="menu">
+        <a href="{% url 'employee_list' %}">Главная</a>
         <a href="{% url 'reports' %}">Отчеты</a>
         <a href="{% url 'orders' %}">Заказы</a>
-        <a href="{% url 'employee_list' %}">Главная</a>
+        
     </div>
     </div>
     <form id="main-form">
@@ -65,7 +66,7 @@
         <!-- Popup notification -->
         <div id="notification" class="popup">Данные успешно сохранены!</div>
     </form>
-    
+
 <script>
     function loadTasks() {
         var selectedPosition = document.getElementById('position').value;

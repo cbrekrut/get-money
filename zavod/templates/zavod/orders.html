@@ -14,9 +14,10 @@
     <h2>ООО "Металл Дизайн" - Заказы</h2>
     </div>
     <div class="menu">
-        <a href="{% url 'reports' %}">Отчеты</a>
+         <a href="{% url 'employee_list' %}">Главная</a>
+         <a href="{% url 'reports' %}">Отчеты</a>
         <a href="{% url 'orders' %}">Заказы</a>
-        <a href="{% url 'employee_list' %}">Главная</a>
+       
     </div>
     </div>
     <button type="button" class="upload-btn" onclick ="UploadOrders()">Загрузить заказ</button>
@@ -25,7 +26,7 @@
         <div class="active-orders">
         <ul>
             {% for order in active_orders %}
-                <li>{{ order.name }} - {{ order.count_detail }} шт. - {{ order.count_times}} ч.</li>
+                <li>{{ order.code }} - {{ order.name }} - {{ order.count_detail }} шт. - {{ order.count_times}} ч.</li>
             {% endfor %}
         </div>
     </ul>
