@@ -15,21 +15,24 @@ def employee_list(request):
     employees = Employee.objects.all()
     positions = Position.objects.all()
     tasks = Task.objects.all()
-    return render(request, 'zavod/employee_list.html', {'employees': employees, 'positions': positions, 'tasks': tasks})
+    task_codes = Task.objects.values_list('code', flat=True).distinct()
+
+    return render(request, 'zavod/employee_list.html', {'employees': employees, 'positions': positions, 'tasks': tasks,'task_codes':task_codes})
 
 def get_tasks(request):
-    selected_position = request.GET.get('position')
-    tasks = Task.objects.filter(position__title=selected_position).values('name')
+    selected_position = request.GET.get('position', '')
+    selected_task_code = request.GET.get('task_code', '')
+    print(selected_position)
+    print(selected_task_code)
+    tasks = Task.objects.filter(position__title=selected_position, code=selected_task_code).values('code', 'name')
+    print(tasks)
     return JsonResponse(list(tasks), safe=False)
 
-
 def generate_excel(request):
-    # Check if the form is submitted
     if request.method == 'POST':
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
 
-        # Convert string dates to datetime objects
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
@@ -73,13 +76,16 @@ def save_data(request):
     fio = data.get('fio')
     position = data.get('position')
     tasks = data.get('tasks', [])
+    code = data.get('code')
     tasks_count = data.get('tasks_count', [])
-
+    print("--------------------------------")
+    print(code)
+    print("--------------------------------")
     for i, task_description in enumerate(tasks):
         task_count = int(tasks_count[i])
 
         # Находим соответствующий объект Task по описанию
-        task_instance = Task.objects.get(name=task_description)
+        task_instance = Task.objects.get(name=task_description,code =code)
 
         # Проверяем, чтобы count не стал отрицательным
         if task_instance.count_detail >= task_count:

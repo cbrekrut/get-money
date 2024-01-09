@@ -37,6 +37,13 @@
             <option value="{{ position.title }}">{{ position.title }}</option>
             {% endfor %}
         </select>
+         <label for="task-code">Выберите код задачи:</label>
+        <select id="task-code" name="task-code" onchange="loadTasks()">
+            <option value="test">- - - - -</option>
+            {% for task in task_codes %}
+                    <option value="{{ task }}">{{ task }}</option>
+                 {% endfor %}
+            </select>
         <div class = "container-flex">
         <div id="task-container">
             <label for="task">Выберите задачу:</label>
@@ -60,30 +67,27 @@
         <button type="button" class="add-form-btn" onclick="addNewSelect()">Добавить задачу</button>
         <button type="button" class="save-btn" onclick="saveData()">Сохранить</button>
 
-        <!-- Hidden input field to store selected tasks -->
         <input type="hidden" id="selected-tasks" name="selected-tasks" value="">
 
-        <!-- Popup notification -->
         <div id="notification" class="popup">Данные успешно сохранены!</div>
     </form>
 
 <script>
     function loadTasks() {
-        var selectedPosition = document.getElementById('position').value;
+    var selectedPosition = document.getElementById('position').value;
+    var selectedTaskCode = document.getElementById('task-code').value;
 
-        // Загрузите задачи на основе выбранной должности
-        fetch('/get-tasks/?position=' + selectedPosition)
+    fetch(`/get-tasks/?position=${selectedPosition}&task_code=${selectedTaskCode}`)
         .then(response => response.json())
         .then(data => {
-            // Обновите элемент выбора задачи полученными задачами
             var taskSelect = document.getElementById('task');
-            taskSelect.innerHTML = '<option value="test">- - - - -</option>'; // Очистите существующие варианты
+            taskSelect.innerHTML = '<option value="test">- - - - -</option>'; 
             data.forEach(function(task) {
                 var option = document.createElement('option');
                 option.value = task.name;
-                option.text = task.name;
+                option.text = task.code+' '+ task.name;
                 taskSelect.appendChild(option);
-            });
+        });
         })
         .catch(error => {
             console.error('Ошибка при загрузке задач:', error);
@@ -100,10 +104,10 @@
         }
 
         function saveData() {
-            // Get selected ФИО, должность, and task values
             var selectedData = {
                 fio: document.getElementById('fio').value,
                 position: document.getElementById('position').value,
+                code: document.getElementById('task-code').value,
                 tasks: [],
                 tasks_count:[],
             };
@@ -117,15 +121,13 @@
                 selectedData.tasks_count.push(select.value);
             });
 
-            // Get the CSRF token from the cookie
             var csrftoken = getCookie('csrftoken');
 
-            // Perform AJAX request to save data to the Django database (requires Django view)
             fetch('/save-data/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken,  // Include the CSRF token in the headers
+                    'X-CSRFToken': csrftoken,  
                 },
                 body: JSON.stringify(selectedData),
             })
@@ -139,18 +141,15 @@
             });
         }
 
-        // Function to show the notification
         function showNotification() {
             var notification = document.getElementById('notification');
             notification.style.display = 'block';
 
-            // Hide the notification after 3 seconds
             setTimeout(function() {
                 notification.style.display = 'none';
             }, 3000);
         }
 
-        // Function to get CSRF token from cookies
         function getCookie(name) {
             var cookieValue = null;
             if (document.cookie && document.cookie !== '') {
