@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'zavod/daily.css' %}">
+    <meta http-equiv="refresh" content="20;url={% url 'employee_list' %}">
+    <title>Ежедневный отчет</title>
+</head>
+<body>
+    <h2>Ежедневный отчет</h2>
+    <p>Отчет для {{ fio }}</p>
+    <p>Общая выручка сегодня: {{ total_earnings }} рублей</p>
+    <p>Выполненные задачи сегодня:</p>
+    <ul>
+        {% for task in completed_tasks %}
+            <li>{{ task.task }} - Количество выполненных работ: {{ task.count }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

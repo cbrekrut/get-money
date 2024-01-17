@@ -47,7 +47,7 @@
         <div class = "container-flex">
         <div id="task-container">
             <label for="task">Выберите задачу:</label>
-            <select id="task" name="task">
+            <select id="task" name="task" onchange="generateTaskCount()">
                 <option value="test">- - - - -</option>
                 <!--Задачи загрузятся динамически-->
             </select>
@@ -55,17 +55,16 @@
         <div id="task-count-container">
             <label for="task-count">Кол-во:</label>
             <select id ="task-count" name="task-count">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
+            <!--Должны загружаться динамически-->
             </select>
             </div>
         </div>
         <div class = "clear">
         </div>
         <button type="button" class="add-form-btn" onclick="addNewSelect()">Добавить задачу</button>
-        <button type="button" class="save-btn" onclick="saveData()">Сохранить</button>
+        <form id="main-form" action="{% url 'daily_summary' %}" method="get">
+            <button type="button" class="save-btn" onclick="saveData()">Сохранить</button>
+        </form>
 
         <input type="hidden" id="selected-tasks" name="selected-tasks" value="">
 
@@ -74,25 +73,59 @@
 
 <script>
     function loadTasks() {
-    var selectedPosition = document.getElementById('position').value;
-    var selectedTaskCode = document.getElementById('task-code').value;
+        var selectedPosition = document.getElementById('position').value;
+        var selectedTaskCode = document.getElementById('task-code').value;
 
-    fetch(`/get-tasks/?position=${selectedPosition}&task_code=${selectedTaskCode}`)
-        .then(response => response.json())
-        .then(data => {
-            var taskSelect = document.getElementById('task');
-            taskSelect.innerHTML = '<option value="test">- - - - -</option>'; 
-            data.forEach(function(task) {
-                var option = document.createElement('option');
-                option.value = task.name;
-                option.text = task.code+' '+ task.name;
-                taskSelect.appendChild(option);
-        });
-        })
-        .catch(error => {
-            console.error('Ошибка при загрузке задач:', error);
-        });
+        fetch(`/get-tasks/?position=${selectedPosition}&task_code=${selectedTaskCode}`)
+            .then(response => response.json())
+            .then(data => {
+                var taskSelect = document.getElementById('task');
+                var taskCountSelect = document.getElementById('task-count');
+
+                taskSelect.innerHTML = '<option value="test">- - - - -</option>';
+                taskCountSelect.innerHTML = ''; // Clear existing options
+
+                data.forEach(function(task) {
+                    var option = document.createElement('option');
+                    option.value = task.name;
+                    option.text = task.code + ' ' + task.name;
+                    taskSelect.appendChild(option);
+
+                });
+            })
+            .catch(error => {
+                console.error('Error loading tasks:', error);
+            });
     }
+</script>
+<script>
+    function generateTaskCount() {
+        var taskSelect = document.getElementById("task");
+        var selectedTaskCode = document.getElementById('task-code').value;
+        var taskCountSelect = document.getElementById("task-count");
+
+        var selectedTask = taskSelect.value;
+        // Запрос к серверу для получения количества на основе выбранной задачи
+        
+        fetch(`/get_task_count/?selected_task=${selectedTask}&task_code=${selectedTaskCode}`)
+            .then(response => response.json())
+            .then(data => {
+                data.count_list.forEach(count => {
+                    const maxCount = count.count_detail;
+
+                    for (let i = 1; i <= maxCount; i++) {
+                        var option = document.createElement("option");
+                        option.value = i;
+                        option.text = i;
+                        taskCountSelect.add(option);
+            }
+                });
+            })
+            .catch(error => console.error('Ошибка:', error));
+    }
+
+    // Вызываем функцию при загрузке страницы для установки начального состояния
+    generateTaskCount();
 </script>
 
     <script>
@@ -135,6 +168,7 @@
             .then(data => {
                 console.log('Data saved successfully:', data);
                 showNotification();  // Show the notification on success
+                submitForm();
             })
             .catch(error => {
                 console.error('Error saving data:', error);
@@ -165,6 +199,35 @@
             }
             return cookieValue;
         }
+
+    function submitForm() {
+    var selectedData = {
+        fio: document.getElementById('fio').value,
+        position: document.getElementById('position').value,
+        code: document.getElementById('task-code').value,
+        tasks: [],
+        tasks_count: [],
+    };
+
+    var taskSelects = document.querySelectorAll('#task-container select');
+    taskSelects.forEach(function(select) {
+        selectedData.tasks.push(select.value);
+    });
+
+    var taskcSelects = document.querySelectorAll('#task-count-container select');
+    taskcSelects.forEach(function(select) {
+        selectedData.tasks_count.push(select.value);
+    });
+
+    // Преобразуйте объект с данными в строку параметров URL
+    var queryString = Object.keys(selectedData).map(key => key + '=' + encodeURIComponent(selectedData[key])).join('&');
+
+    // Добавьте queryString к URL формы
+    document.getElementById('main-form').action = '{% url "daily_summary" %}?'+ queryString;
+
+    // Отправка формы
+    document.getElementById('main-form').submit();
+}
 
     </script>
 </body>

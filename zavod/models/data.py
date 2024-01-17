@@ -2,6 +2,7 @@ from django.db import models
 
 class Data(models.Model):
     full_name = models.CharField(max_length=100)
+    code = models.CharField(max_length=100,default='0')
     position = models.CharField(max_length=50)
     task = models.CharField(max_length=100)
     count = models.IntegerField()

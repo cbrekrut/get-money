@@ -7,9 +7,29 @@ import json
 from .models import Employee, Position, Task, Data
 from .forms import UploadFileForm
 import pandas as pd
-from datetime import datetime
+from datetime import datetime,date
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, F,Count
 
+def daily_summary(request):
+    print(request.GET)
+    fio = request.GET.get('fio', '')
+    position = request.GET.get('position', '')
+    code = request.GET.get('task-code','')
+    today = date.today()
+    print(fio)
+    print(position)
+    print(code)
+    # Фильтрация объектов Data на основе переданных параметров
+    data_objects = Data.objects.filter(date=today, status='moderation', full_name=fio, position=position, code=code)
+    print(data_objects)
+    # Вычисление общей выручки
+    total_earnings = data_objects.aggregate(total_earnings=Sum(F('count') * F('cost')))['total_earnings']
+    
+    # Получение выполненных задач и их количества
+    completed_tasks = data_objects.values('task', 'count')
+
+    return render(request, 'zavod/daily_summary.html', {'total_earnings': total_earnings, 'completed_tasks': completed_tasks,'fio':fio})
 
 def employee_list(request):
     employees = Employee.objects.all()
@@ -22,50 +42,48 @@ def employee_list(request):
 def get_tasks(request):
     selected_position = request.GET.get('position', '')
     selected_task_code = request.GET.get('task_code', '')
-    print(selected_position)
-    print(selected_task_code)
     tasks = Task.objects.filter(position__title=selected_position, code=selected_task_code).values('code', 'name')
-    print(tasks)
     return JsonResponse(list(tasks), safe=False)
+
+def get_task_count(request):
+    selected_task = request.GET.get('selected_task', '')
+    selected_task_code = request.GET.get('task_code', '')
+    print(selected_task_code)
+    count_list = list(Task.objects.filter(name = selected_task,code = selected_task_code).values('count_detail'))
+    data = {'count_list': count_list}
+    print(data)
+    return JsonResponse(data, safe=False)
 
 def generate_excel(request):
     if request.method == 'POST':
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
-
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-
-        # Filter data based on the date range
         data_objects = Data.objects.filter(date__range=(start_date, end_date),status='approved')
     else:
-        # If the form is not submitted, get all data
         data_objects = Data.objects.all()
 
-    # Create a new workbook and add a worksheet
     workbook = Workbook()
     worksheet = workbook.active
 
-    # Write column headers
-    headers = ['Full Name', 'Position', 'Task', 'Date', 'Cost', 'Count', 'Money']
+    headers = ['ФИО', 'Наименование цеха', 'Наименование операции','Код Заказа' ,'Дата', 'Стоимость', 'Кол-во', 'Финансы']
     for col_num, header in enumerate(headers, 1):
         worksheet.cell(row=1, column=col_num, value=header)
 
-    # Write data rows
     for row_num, data_object in enumerate(data_objects, 2):
         worksheet.cell(row=row_num, column=1, value=data_object.full_name)
         worksheet.cell(row=row_num, column=2, value=data_object.position)
         worksheet.cell(row=row_num, column=3, value=data_object.task)
-        worksheet.cell(row=row_num, column=4, value=data_object.date.strftime('%Y-%m-%d'))
-        worksheet.cell(row=row_num, column=5, value=data_object.cost)
-        worksheet.cell(row=row_num, column=6, value=data_object.count)
-        worksheet.cell(row=row_num, column=7, value=(int(data_object.count) * int(data_object.cost)))
+        worksheet.cell(row=row_num, column=4, value=data_object.code)
+        worksheet.cell(row=row_num, column=5, value=data_object.date.strftime('%d-%m-%Y'))
+        worksheet.cell(row=row_num, column=6, value=data_object.cost)
+        worksheet.cell(row=row_num, column=7, value=data_object.count)
+        worksheet.cell(row=row_num, column=8, value=(int(data_object.count) * float(data_object.cost)))
 
-    # Create the response with the appropriate content type
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename=employee_data.xlsx'
 
-    # Save the workbook to the response
     workbook.save(response)
 
     return response
@@ -78,20 +96,16 @@ def save_data(request):
     tasks = data.get('tasks', [])
     code = data.get('code')
     tasks_count = data.get('tasks_count', [])
-    print("--------------------------------")
-    print(code)
-    print("--------------------------------")
+   
     for i, task_description in enumerate(tasks):
         task_count = int(tasks_count[i])
 
-        # Находим соответствующий объект Task по описанию
         task_instance = Task.objects.get(name=task_description,code =code)
-
         # Проверяем, чтобы count не стал отрицательным
         if task_instance.count_detail >= task_count:
             task_instance.count_detail -= task_count
             task_instance.save()
-            data_instance = Data(full_name=fio, position=position, task=task_description, count=task_count,cost = task_instance.cost)
+            data_instance = Data(full_name=fio, position=position, task=task_description, count=task_count,cost = task_instance.cost,code = task_instance.code)
             data_instance.save()
             return JsonResponse({'message': 'Data saved successfully'})
       
@@ -120,13 +134,13 @@ def upload_orders(request):
             df = pd.read_excel(file)
 
             for index, row in df.iterrows():
-                code = row['Task Code'] 
-                name = row['Task']
-                count_times = float(row['Count Times'])
-                count_detail = int(row['Count Detail'])
-                cost = row['Cost']
-                sels = int(row['Sales'])
-                position_title = row['Position']  
+                code = row['Код заказа'] 
+                name = row['Наименование операции']
+                count_times = float(row['Кол-во операций/ Часов'])
+                count_detail = int(row['Кол-во операций/ Деталей'])
+                cost = row['Цена изготовления 1 детали']
+                sels = int(row['Цена продажи 1 детали'])
+                position_title = row['Цех участок']  
 
                 position = get_object_or_404(Position, title=position_title)
                 Task.objects.create(
@@ -139,7 +153,7 @@ def upload_orders(request):
                     position=position
                 )
 
-            return redirect('orders')  # Перенаправляем на страницу заказов после обработки файла
+            return redirect('orders')  
 
     else:
         form = UploadFileForm()
@@ -152,7 +166,6 @@ def workshop_report(request):
         end_date = request.POST.get('end_date')
         workshop = request.POST.get('workshop')
 
-        # Fetch tasks based on the provided filters
         filtered_tasks = Data.objects.filter(
             date__range=[start_date, end_date],
             position=workshop
@@ -161,11 +174,11 @@ def workshop_report(request):
         wb = Workbook()
         ws = wb.active
 
-        headers = ['Workshop', 'Full Name', 'Order Number']
+        headers = ['Цех', 'ФИО', 'Кол - во','Операция','Код заказа']
         ws.append(headers)
 
         for task in filtered_tasks:
-            row_data = [task.position, task.full_name, task.count]
+            row_data = [task.position, task.full_name, task.count,task.task,task.code]
             ws.append(row_data)
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -178,7 +191,7 @@ def generate_employee_report_excel(employee, employee_data):
     wb = Workbook()
     ws = wb.active
 
-    ws.append(['Name','Date', 'Task', 'Count', 'Cost'])
+    ws.append(['ФИО','Дата', 'Операция', 'Кол-во', 'Стоимость (закупка)'])
     for data in employee_data:
         ws.append([data.full_name, data.date, data.task, data.count, data.cost])
 

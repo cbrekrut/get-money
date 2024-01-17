@@ -11,6 +11,7 @@ urlpatterns = [
     path('workshop_report/', views.workshop_report, name='workshop_report'),
     path('get-tasks/', views.get_tasks, name='get_tasks'),
     path('employee-report/', views.employee_report, name='employee_report'),
+    path('get_task_count/', views.get_task_count, name='get_task_count'),
+     path('daily-summary/', views.daily_summary, name='daily_summary'),
 
-    
 ]
