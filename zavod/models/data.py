@@ -1,12 +1,12 @@
 from django.db import models
-
+from django.utils import timezone
 class Data(models.Model):
     full_name = models.CharField(max_length=100)
     code = models.CharField(max_length=100,default='0')
     position = models.CharField(max_length=50)
     task = models.CharField(max_length=100)
     count = models.IntegerField()
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField("date",editable=True,default=timezone.now)
     cost = models.IntegerField()
     status = models.CharField(
         max_length=20,

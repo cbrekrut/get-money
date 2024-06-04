@@ -67,19 +67,18 @@ def generate_excel(request):
     workbook = Workbook()
     worksheet = workbook.active
 
-    headers = ['ФИО', 'Наименование цеха', 'Наименование операции','Код Заказа' ,'Дата', 'Стоимость', 'Кол-во', 'Финансы']
+    headers = ['Дата','ФИО','Наименование операции','Количество операций ','Код Заказа' , 'Цена изготовления 1 детали','Стоимость изготовления деталей']
     for col_num, header in enumerate(headers, 1):
         worksheet.cell(row=1, column=col_num, value=header)
 
     for row_num, data_object in enumerate(data_objects, 2):
-        worksheet.cell(row=row_num, column=1, value=data_object.full_name)
-        worksheet.cell(row=row_num, column=2, value=data_object.position)
+        worksheet.cell(row=row_num, column=1, value=data_object.date.strftime('%d-%m-%Y'))
+        worksheet.cell(row=row_num, column=2, value=data_object.full_name)
         worksheet.cell(row=row_num, column=3, value=data_object.task)
-        worksheet.cell(row=row_num, column=4, value=data_object.code)
-        worksheet.cell(row=row_num, column=5, value=data_object.date.strftime('%d-%m-%Y'))
-        worksheet.cell(row=row_num, column=6, value=data_object.cost)
-        worksheet.cell(row=row_num, column=7, value=data_object.count)
-        worksheet.cell(row=row_num, column=8, value=(int(data_object.count) * float(data_object.cost)))
+        worksheet.cell(row=row_num, column=4, value=float(data_object.count))
+        worksheet.cell(row=row_num, column=5, value=data_object.code)
+        worksheet.cell(row=row_num, column=6, value=float(data_object.cost))
+        worksheet.cell(row=row_num, column=7, value=(int(data_object.count) * float(data_object.cost)))
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename=employee_data.xlsx'
@@ -107,11 +106,10 @@ def save_data(request):
             task_instance.save()
             data_instance = Data(full_name=fio, position=position, task=task_description, count=task_count,cost = task_instance.cost,code = task_instance.code)
             data_instance.save()
-            return JsonResponse({'message': 'Data saved successfully'})
-      
+        else:
+            return JsonResponse({'message': 'Data Failed'})
         
-
-    return JsonResponse({'message': 'Data Failed'})
+    return JsonResponse({'message': 'Data saved successfully'})
 
 @login_required
 def reports(request):
